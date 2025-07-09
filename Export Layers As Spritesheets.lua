@@ -67,6 +67,7 @@ function exportAll(sprite, basePath)
             if not layer.isGroup then
               local layerName = layer.name:gsub("%s+", spacing)
               local exportPath = basePath .. separator .. groupName .. separator .. subgroupName .. separator .. layerName
+              -- local exportPath = basePath .. separator .. fileBase .. separator .. groupName .. separator .. subgroupName .. separator .. layerName
               exportLayerAsSprite(layer, sprite, exportPath)
             end
           end
@@ -80,13 +81,19 @@ end
 local spr = app.activeSprite
 if not spr then return app.alert("No active sprite.") end
 
-local exportDir = app.fs.filePath(spr.filename) .. "/exports"
+local fileBase = "unsaved_sprite"
+-- Get name of sprite
+if app.activeSprite.filename and #app.activeSprite.filename > 0 then
+  fileBase = app.activeSprite.filename:match("([^/\\]+)%.aseprite$")
+end
+
+local exportDir = app.fs.filePath(spr.filename) .. "/exports/" .. fileBase
 
 if app.alert{
   title = "Export Each Layer as Spritesheet",
   text = {
-    "This will export every numbered layer from each subgroup of each group",
-    "Output structure: exports/front/hair/1.png",
+    "This will export every layer from each subgroup of each group",
+    "Output structure: exports/<fileName>/<groupName>/<subgroupName>/<layerName>.png",
     "",
     "Continue?"
   },

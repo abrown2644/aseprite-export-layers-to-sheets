@@ -4,7 +4,7 @@ local spacing = "_"
 function exportCombinedLayersBySubgroup(sprite, exportDir)
   local layerMap = {}
 
-  -- Step 1: Group layers by subgroup name and layer index
+  -- Step 1: Group layers by subgroup name and numeric layer name
   for _, group in ipairs(sprite.layers) do
     if group.isGroup then
       local groupName = group.name:gsub("%s+", spacing)
@@ -13,17 +13,30 @@ function exportCombinedLayersBySubgroup(sprite, exportDir)
         if subgroup.isGroup then
           local subgroupName = subgroup.name:gsub("%s+", spacing)
 
-          for index, layer in ipairs(subgroup.layers) do
+          -- Collect layers and sort by numeric name
+          local numberedLayers = {}
+          for _, layer in ipairs(subgroup.layers) do
             if not layer.isGroup then
-              local layerKey = subgroupName .. separator .. tostring(index - 1) -- zero-indexed
-              if not layerMap[layerKey] then
-                layerMap[layerKey] = {}
+              local numericIndex = tonumber(layer.name)
+              if numericIndex ~= nil then
+                table.insert(numberedLayers, { index = numericIndex, layer = layer })
               end
-              table.insert(layerMap[layerKey], {
-                group = groupName,
-                layer = layer
-              })
             end
+          end
+
+          table.sort(numberedLayers, function(a, b)
+            return a.index < b.index
+          end)
+
+          for _, entry in ipairs(numberedLayers) do
+            local layerKey = subgroupName .. separator .. tostring(entry.index)
+            if not layerMap[layerKey] then
+              layerMap[layerKey] = {}
+            end
+            table.insert(layerMap[layerKey], {
+              group = groupName,
+              layer = entry.layer
+            })
           end
         end
       end
@@ -40,8 +53,6 @@ function exportCombinedLayersBySubgroup(sprite, exportDir)
     local sheetHeight = frameHeight * #entries
 
     local combinedSprite = Sprite(sheetWidth, sheetHeight, sprite.colorMode)
-
-    -- Create blank canvas
     local finalImage = Image(sheetWidth, sheetHeight, sprite.colorMode)
 
     for rowIndex, entry in ipairs(entries) do
@@ -60,14 +71,13 @@ function exportCombinedLayersBySubgroup(sprite, exportDir)
 
     local outPath = exportDir .. separator .. subgroupName
     app.fs.makeDirectory(outPath)
-
     local filePath = outPath .. separator .. index
 
     app.command.ExportSpriteSheet{
       sprite = combinedSprite,
       ui = false,
       askOverwrite = false,
-      type = SpriteSheetType.NONE, -- critical: don't rearrange
+      type = SpriteSheetType.NONE,
       columns = 1,
       rows = 1,
       textureFilename = filePath .. ".png",
@@ -103,7 +113,7 @@ if app.alert{
   title = "Export Combined Layers",
   text = {
     "This will combine each indexed layer from all groups (front/back/left/right)",
-    "into a single spritesheet per layer in each subgroup.",
+    "into a single spritesheet per numeric layer in each subgroup.",
     "",
     "Output path:",
     exportDir,

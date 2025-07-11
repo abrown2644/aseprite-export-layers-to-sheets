@@ -1,7 +1,7 @@
 local separator = "/"
 local spacing = "_"
 
-function exportCombinedLayersBySubgroup(sprite, exportDir)
+function ExportCombinedLayersBySubgroup(sprite, exportDir)
   local layerMap = {}
 
   -- Step 1: Group layers by subgroup name and numeric layer name
@@ -125,4 +125,4 @@ if app.alert{
   return
 end
 
-exportCombinedLayersBySubgroup(spr, exportDir)
+ExportCombinedLayersBySubgroup(spr, exportDir)
